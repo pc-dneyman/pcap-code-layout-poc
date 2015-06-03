@@ -1,0 +1,226 @@
+<style type="text/css"> pre { white-space: pre-wrap; } </style>
+<pre>
+
+
+1.  Possible breakdown of Pcap code line. Just an illustration! All categories, 
+    their names and actual placements of modules among them are just a prototype 
+    and up to domain experts!
+
+    Note, "integration-testing" module bellow refers to a set of common tools to 
+    do integraton testing for modules in the category (treating actual projects 
+    as black boxes). For different categories it could be different. This module 
+    does not exist currently and it is just an illustration.
+
+
+./pcap                     // no changes
+    keys
+    license
+    phantomjs
+    spring
+    templates
+
+./apps                     // web apps only
+    ingegration-testing    
+    pcap-admin-app
+    pcap-agent-app
+    pcap-api-app
+    pcap-archive-app
+    pcap-etl-app
+    pcap-queue-app
+    pcap-refresh-app
+    pcap-salesforce-app
+    sp-app
+
+./analytics                 // data science 
+    ingegration-testing
+    pcap-analytics-dao
+    pcap-narrative-science
+    pcap-weka
+
+./core                      // managers/biz-logic + model + dao + controllers
+    ingegration-testing
+    aggregation-commands
+    pcap-advice
+    pcap-agent
+    pcap-archive
+    pcap-batch
+    pcap-command
+    pcap-common-webservice
+    pcap-core-services
+    pcap-dao
+    pcap-eai
+    pcap-image
+    pcap-invest
+    pcap-marketo
+    pcap-mvc
+    pcap-persistence-dependencies
+    pcap-queue-manager
+    pcap-refresh
+    sp-core
+    sp-data
+    sp-wssl
+    sp-yodlee
+    sp-yodlee-message
+
+./integrations                // managers/biz-logic may need to be separated from client adapters)
+    ingegration-testing
+    aaws_client
+    pcap-apex
+    pcap-aws
+    pcap-branchmetrics
+    pcap-docusign
+    pcap-docusign-client
+    pcap-exacttarget
+    pcap-exacttarget-client
+    pcap-fiksu
+    pcap-google-api
+    pcap-lincoln-trust
+    pcap-moneystream
+    pcap-myvest
+    pcap-onelogin
+    pcap-pershing
+    pcap-pershing-client
+    pcap-rightscale
+    pcap-salesforce-client
+    pcap-salesforce-integration
+    pcap-silverpop
+    pcap-socketlabs
+    pcap-wmsi
+    pcap-wmsi-client
+    pcap-xignite
+    pcap-yodlee
+    pcap-yodlee-client
+    pcap-zendesk
+    pcap-zillow-client
+    xignite-client
+    yodlee-client
+
+./base                        // common utils; could be called "common"
+    ingegration-testing
+    pcap-config
+    sp-common
+    sp-security
+
+./tools                       // dito
+    build-tools
+    pcap-build-tools
+    pcap-cmd-util
+    pcap-tools
+
+./legacy                      // may not be the case, but seems like unused
+    client-firefox
+    client-iphone
+    client-univeral-ios
+    docs
+    etc
+    sp-passmark
+    sp-site
+    sp-test
+    win32
+
+2.  Maven cycles examples:
+
+    $ ls
+    pom.xml
+    apps
+    analytics
+    core
+    base
+    integrations
+
+    $ mvn clean install        // builds ALL modules in proper dependency resolved by Maven
+    
+    $ pushd apps
+    $ mvn clean install        // builds and tests ALL apps 
+
+    $ cd sp-app
+    $ mvn clean install        // builds and tests ONLY root app
+    $ popd
+    
+    $ pushd core
+    $ mvn clean install        // builds and tests ALL core modules
+    $ popd
+
+    $ mvn -f integrations/pom.xml clean install // builds and tests ALL integration modules
+
+    Same applied in Jenkins and in Eclipse
+
+
+3.  Possible flavors of *logical* hierarchies (just an illustration!)
+    This does require some untangling of dependencies and refactoring:
+
+
+    A)
+                                        apps        analytics   
+                                                
+                                                ^
+                                                |
+                                                |
+
+    core (model + dao + managers + controllers)     integration (external partners APIs)
+
+                                                ^
+                                                |
+                                                |
+                                                
+                                        base (common utils)
+
+
+    B)
+
+                              apps     analytics   
+                                    
+                                    ^
+                                    |
+                                    |
+
+    core (managers + controllers)       integration (external partners APIs)
+
+                                    ^
+                                    |
+                                    |
+
+                            persistence (model and dao)
+                                    
+                                    ^
+                                    |
+                                    |
+                                    
+                            base (common utils)
+
+
+
+    C)
+
+                        apps analytics buildtools
+                                    
+                                    ^
+                                    |
+                                    |
+
+                        core (managers + controllers)
+
+                                    ^
+                                    |
+                                    |
+
+                        integration (external partners APIs)
+
+                                    ^
+                                    |
+                                    |
+
+                        persistence (model and dao)
+                                    
+                                    ^
+                                    |
+                                    |
+                                    
+                            base (common utils)
+
+
+
+</pre>
+
+
+

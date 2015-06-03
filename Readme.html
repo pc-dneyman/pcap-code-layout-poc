@@ -1,0 +1,173 @@
+<style type="text/css"> pre { white-space: pre-wrap; } </style> 
+<pre>
+
+Enhanced code layout POC:
+
+0.  NO CHANGES to current deployment setup and resulting artifacts'.     
+    Pom files of actual projects are unchanged.
+    ================================================================
+
+    Some refactoring will be required, but it should definitely benefit overall
+    code cleanup initiative.
+
+    This does not solve all problems that we have related to building and 
+    dependencies. But brings in new level of flexibility and convinience.
+
+
+1.  Critique of Profiles:      
+    =====================
+
+    In most cases they should be used for other than build ordering reasons
+    (like branching Dev vs Prod deployment  differences or turn on/off certain
+    settings).
+
+    But what is extremly critical here is that -Pxyz forces Maven to rely on the
+    explicit order of compilation specified  in POM file!
+
+    At the same time standard <modules> element in "parent POM" project will
+    sort out all dependencies on its own.
+
+    Even if they specified in randon order! When cyclic dependency are
+    discovered Maven will simply abort with clear  error message.
+
+    When adding new module, currently we have to place it in many profiles and
+    in the right place within the profile.
+
+    With new layout, we need to simply place it inside correct folder and add
+    entry in its parent POM.
+
+
+2.  Code organization:     
+    ===================
+
+    We group code in classes, packages and jars to enable code reuse, to ease
+    management of the related code and to help  discovery of logic within the
+    codebase.
+
+    But many jars on the same level do not reveal anything about their
+    interdependence - in a same way that many public  functions in one class
+    introduct management and testing challenges. It is getting very hard to
+    ensure and preempt appearance  of cyclic dpeendencis and it is hard to
+    manage code.
+
+    Proposed solution is to group semantically (logically, horizontally)
+    relevant jars under the same "folder" - each with  its own "parent POM".
+
+    Each "folder bound POM" will know how to build set of jars inside its folder
+    - they are all listed within "modules" element.
+
+    There are obviousely interdependencies between those jars, but "parent POM"
+    by virtue Maven's feature itself resolves  all of them automatically, if not
+    - shows the error.
+
+    The topmost "grand-parent POM" knows only about its "child POMs" and nothing
+    about individual jars behind them.
+
+    Again it will sort out "child POMs" dependencies on its own, during the
+    build. Alghough keeping them in proper order  in POM file iself is a good
+    practice.
+
+
+3.  Design & testability benefits:     
+    ==============================
+
+    Such a structure is helpful from the "Design" point of view, as it naturally
+    promotes proper placement of new code  wihtin overall code infrastructure.
+
+    It makes Testing (espcially integration or functional testing) very isolated
+    and well targeted.
+
+    F.e. we can imagine some common set of tools or some light in-house
+    framework that resides inside the "layer folder" and as  such creates common
+    ground to test all projects inside this folder.
+
+    For "apps" folder it could be some Spring MVC stuff (just for the sake of
+    agruments).
+
+    For "core" folder, exposing functional APIs, it could be set of Python
+    utilities that call end-points and parse results.
+
+    For "external integration" folder, it could be common test harnes that
+    generates different pre-canned responses  based on the type of service in
+    the request (10 flavors of Yodlee respones, 20 flavors of Xignite responses,
+    etc.)
+
+    From day-to-day code maintanace we can test category at once before submitting 
+    code and not worry about  other "layers".
+
+    Currently to do this we have to manually navigate from module to module.
+
+
+4.  Jenkins benefits:     
+    =====================
+
+    Many useful variations of build scenarios - locally and in Jenkins. Navigate
+    into a folder or point to desired pom.xml from  any other location. No need
+    to know which profile to use.
+
+    Proposed structure will save a lot of build time locally and in Jenkins. We
+    can send only a single changed "layer" to compile  and test in Jenkins.
+
+    Having all others "layers" frozen before release allows very fine grained
+    control over what is changed and what could be the implications.
+
+    F.e. if public API within a "layer" did not change, we need to
+    clean/build/test in Jenkins only "this" layer. All higher  layers should
+    *only* be tested in Jenkins!
+
+    It is no different from what we have right now in essence, but with Profile
+    controlled build we can't implement it. If sp-core  changed and it is the
+    only change and it is internal to sp-core, we still have to build/test ALL,
+    because there is no other way to do it.
+
+
+5.  Eclipse:     
+    =========
+
+    IDE should lighten up because we can quickly load a single "layer" in focus.
+    Which does not prevent from loading all,  by importing "grandparent POM". Or
+    or loading a "layer" in focus, plus any individual projects from other
+    layers.
+
+
+6.  Versioning of artifacts:     
+    ========================
+
+    This structure does not solve directly problem of managing mulit-versioned
+    artifacts used by different applicatons, but it can  help it by facilitating
+    a versioned bundles of jars.
+
+    Also, we can use "provided" scope for the whole "bundle/layer", so that
+    current work within the layer is not affecting released  "apps" until new
+    version is certified and published.
+
+    F.e. all jars in "base" layer can be pushed into artifactory and used by
+    "apps" without need to compile them - as provided  dependency
+
+7.  Deployment possibilities:     
+    =========================
+
+    Proposed structure does not benefit directly to the way we deploy and
+    organize web apps currently.
+
+    But it may come useful if we will one day adapt such popular maven-like
+    container configurations as found in JBoss7, for example.
+
+    Another aspect of this change, could be in using "provided" scope for our
+    own "foundation / low level" layers.
+
+    For example, at certain point in time we publish int artifactory Core-
+    Bundle-V1.
+
+    At this point all Apps in production will use this version of core jars.
+
+    At the same time, Admin app, could exclusively start using new bundle Core-
+    Bundle-V2, that is not yet certified for all apps.
+
+    Again, this is achievable with with current setup as well - no questions.
+    But it is less flexible.
+
+</pre>
+
+
+
